@@ -1,0 +1,484 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Code Review Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .header {
+            height: 70px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #60a5fa;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #86efac;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 25px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 {
+            margin-bottom: 8px;
+            font-size: 34px;
+            color: #111827;
+        }
+
+        .hero p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 450px;
+            resize: vertical;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #111827;
+            color: #e5e7eb;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #3b82f6;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .review-btn {
+            background: #2563eb;
+            color: white;
+            flex: 1;
+        }
+
+        .review-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .clear-btn {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .clear-btn:hover {
+            background: #d1d5db;
+        }
+
+        .result {
+            height: 450px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 18px;
+            background: #fafafa;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .placeholder {
+            color: #9ca3af;
+            text-align: center;
+            margin-top: 170px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: auto auto 15px;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            padding: 25px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            textarea,
+            .result {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">
+        🤖 AI <span>Code Review</span> Assistant
+    </div>
+
+    <div class="status">
+        ● AI Assistant
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="hero">
+        <h1>AI Code Review Assistant</h1>
+
+        <p>
+            Analyze your code for errors, security issues,
+            performance problems and improvements.
+        </p>
+    </div>
+
+    <div class="main">
+
+        <div class="card">
+
+            <h2>💻 Your Code</h2>
+
+            <div class="controls">
+
+                <select id="language">
+                    <option value="Python">Python</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Java">Java</option>
+                    <option value="C++">C++</option>
+                    <option value="C">C</option>
+                    <option value="C#">C#</option>
+                    <option value="PHP">PHP</option>
+                    <option value="HTML">HTML</option>
+                    <option value="CSS">CSS</option>
+                    <option value="SQL">SQL</option>
+                </select>
+
+            </div>
+
+            <textarea id="code" placeholder="Paste your code here...
+
+Example:
+
+def calculate(a, b):
+    return a + b
+
+result = calculate(10, 20)
+print(result)"></textarea>
+
+            <div class="buttons">
+
+                <button
+                    class="review-btn"
+                    onclick="reviewCode()">
+                    🔍 Review Code
+                </button>
+
+                <button
+                    class="clear-btn"
+                    onclick="clearCode()">
+                    Clear
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>🤖 AI Review</h2>
+
+            <div id="loading" class="loading">
+
+                <div class="spinner"></div>
+
+                <div>
+                    AI is analyzing your code...
+                </div>
+
+            </div>
+
+            <div id="result" class="result">
+
+                <div class="placeholder">
+                    Your AI code review will appear here.
+                    <br><br>
+                    Enter your code and click
+                    <b>Review Code</b>.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="footer">
+    AI Code Review Assistant • Python + Flask + Gemini AI
+</div>
+
+
+<script>
+
+async function reviewCode() {
+
+    const code = document.getElementById("code").value.trim();
+
+    const language =
+        document.getElementById("language").value;
+
+    const result =
+        document.getElementById("result");
+
+    const loading =
+        document.getElementById("loading");
+
+
+    if (!code) {
+
+        result.innerHTML =
+            '<div style="color:red;">Please enter some code first.</div>';
+
+        return;
+    }
+
+
+    result.style.display = "none";
+
+    loading.style.display = "block";
+
+
+    try {
+
+        const response = await fetch(
+            "/review",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    code: code,
+                    language: language
+                })
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        loading.style.display = "none";
+
+        result.style.display = "block";
+
+
+        if (!data.success) {
+
+            result.innerHTML =
+                `<div style="color:red;">
+                    <b>Error:</b><br><br>
+                    ${escapeHtml(data.error)}
+                </div>`;
+
+            return;
+        }
+
+
+        result.innerHTML =
+            `<div>${formatReview(data.review)}</div>`;
+
+    }
+
+    catch (error) {
+
+        loading.style.display = "none";
+
+        result.style.display = "block";
+
+        result.innerHTML =
+            `<div style="color:red;">
+                <b>Connection Error</b><br><br>
+                Make sure the Python Flask server is running.
+            </div>`;
+    }
+}
+
+
+function formatReview(text) {
+
+    let html = escapeHtml(text);
+
+
+    html = html.replace(
+        /```([\s\S]*?)```/g,
+        function(match, code) {
+
+            return `
+                <pre style="
+                    background:#111827;
+                    color:#e5e7eb;
+                    padding:15px;
+                    border-radius:8px;
+                    overflow-x:auto;
+                    white-space:pre;
+                ">${code}</pre>
+            `;
+        }
+    );
+
+
+    html = html.replace(
+        /^(1\. SUMMARY|2\. ERRORS|3\. SECURITY|4\. CODE QUALITY|5\. PERFORMANCE|6\. IMPROVED CODE|7\. EXPLANATION)$/gm,
+        "<h3>$1</h3>"
+    );
+
+
+    html = html.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+
+    html = html.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    return html;
+}
+
+
+function escapeHtml(text) {
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+function clearCode() {
+
+    document.getElementById("code").value = "";
+
+    document.getElementById("result").innerHTML = `
+        <div class="placeholder">
+            Your AI code review will appear here.
+            <br><br>
+            Enter your code and click
+            <b>Review Code</b>.
+        </div>
+    `;
+}
+
+</script>
+
+</body>
+</html>
